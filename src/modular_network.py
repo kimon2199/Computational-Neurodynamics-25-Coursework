@@ -1,5 +1,6 @@
 from src.iznetwork import IzNetwork
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ModularNetworkGenerator:
@@ -306,17 +307,77 @@ class ModularNetworkGenerator:
 
         # TODO
 
-    def mean_firing_rate(self):
+    def mean_firing_rate(
+        self,
+        activations: list[tuple[int, int]],
+        sim_time: int,
+        window_size: int,
+        step_size: int,
+        include_inhibitory: bool = True,
+    ):
         """
         Plots the mean firing rate of the network.
 
-        Returns:
-        mean_rate -- Mean firing rate in Hz.
+        Parameters:
+        activations -- List of spike times in ms and neuron indices: (t, idx).
+        sim_time    -- Total simulation time in ms.
+        window_size -- Size of the sliding window in ms.
+        step_size   -- Step size for the sliding window in ms.
         """
         if self.network is None:
             raise ValueError("Network has not been generated yet.")
 
-        pass
+        # Number of modules + 1 for inhibitory neurons
+        n_firings = np.zeros((self.NUMBER_OF_MODULES + 1, sim_time // step_size))
+
+        for t, neuron_idx in activations:
+
+            if neuron_idx >= self.TOTAL_EXCITATORY_NEURONS:
+                # Inhibitory neuron
+                module_idx = self.NUMBER_OF_MODULES  # Last index for inhibitory
+            else:
+                module_idx = neuron_idx // self.EXCITATORY_PER_MODULE
+
+            # Get the time bins the spike falls into
+            for bin_idx in range(
+                max(0, (t - window_size) // step_size + 1),
+                min(t // step_size + 1, sim_time // step_size),
+            ):
+                n_firings[module_idx, bin_idx] += 1
+
+        # Plot the firing rates as a line plot
+        time_bins = np.arange(0, sim_time, step_size)
+        plt.figure(figsize=(12, 6))
+
+        for module_idx in range(
+            self.NUMBER_OF_MODULES + (1 if include_inhibitory else 0)
+        ):
+            firing_rates = (
+                n_firings[module_idx, :]
+                / (window_size / 1000.0)
+                / (
+                    self.EXCITATORY_PER_MODULE
+                    if module_idx < self.NUMBER_OF_MODULES
+                    else self.INHIBITORY_NEURONS
+                )
+            )  # Hz / neuron
+
+            label = (
+                f"Module {module_idx + 1}"
+                if module_idx < self.NUMBER_OF_MODULES
+                else "Inhibitory Neurons"
+            )
+            plt.plot(
+                time_bins,
+                firing_rates,
+                label=label,
+            )
+
+        plt.xlabel("Time (ms)")
+        plt.ylabel("Mean Firing Rate (Hz) per Neuron")
+        plt.title("Mean Firing Rate Over Time")
+        plt.legend()
+        plt.show()
 
 
 def main():
@@ -351,7 +412,14 @@ def main():
         networks[p] = net
 
         print(f"--- Finished p = {p} ---")
-        print(generator.run_simulation(simulation_time))
+        spikes = generator.run_simulation(simulation_time)
+        generator.mean_firing_rate(
+            spikes,
+            simulation_time,
+            window_size=50,
+            step_size=20,
+            include_inhibitory=False,
+        )
 
     print(f"--- All 6 networks generated ---")
 
