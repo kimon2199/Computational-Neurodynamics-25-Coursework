@@ -353,13 +353,7 @@ class ModularNetworkGenerator:
             self.NUMBER_OF_MODULES + (1 if include_inhibitory else 0)
         ):
             firing_rates = (
-                n_firings[module_idx, :]
-                / (window_size / 1000.0)
-                / (
-                    self.EXCITATORY_PER_MODULE
-                    if module_idx < self.NUMBER_OF_MODULES
-                    else self.INHIBITORY_NEURONS
-                )
+                n_firings[module_idx, :] / window_size
             )  # Hz / neuron
 
             label = (
@@ -374,7 +368,7 @@ class ModularNetworkGenerator:
             )
 
         plt.xlabel("Time (ms)")
-        plt.ylabel("Mean Firing Rate (Hz) per Neuron")
+        plt.ylabel("Mean Firing Rate per ms")
         plt.title("Mean Firing Rate Over Time")
         plt.legend()
         plt.show()
@@ -406,14 +400,18 @@ def main():
 
     for p in P_VALUES:
         print(f"--- Generating network for p = {p} ---")
-        generator = ModularNetworkGenerator(p, network_params)
 
-        net = generator.generate_modular_network()
-        networks[p] = net
+        networks[p] = ModularNetworkGenerator(p, network_params).generate_modular_network()
 
-        print(f"--- Finished p = {p} ---")
-        spikes = generator.run_simulation(simulation_time)
-        generator.mean_firing_rate(
+        print(f"--- Finished generating network ---")
+
+        print(f"--- Running simulation for p = {p} ---")
+
+        spikes = networks[p].run_simulation(simulation_time)
+
+        print(f"--- Finished running simulation ---")
+
+        networks[p].mean_firing_rate(
             spikes,
             simulation_time,
             window_size=50,
