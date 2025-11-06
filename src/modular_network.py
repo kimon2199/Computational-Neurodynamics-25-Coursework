@@ -268,6 +268,35 @@ class ModularNetworkGenerator:
         print(f"Network for p={self.p} generated.")
         return self.network
 
+    def run_simulation(self, sim_time: int) -> list[tuple[int, int]]:
+        """
+        Runs a simulation of the generated network for a specified time.
+
+        Parameters:
+        sim_time -- Simulation time in milliseconds.
+
+        Returns:
+        spikes -- List of spike times in ms and neuron indices: (t, idx).
+        """
+        if self.network is None:
+            raise ValueError("Network has not been generated yet.")
+
+        spikes = []
+        for t in range(sim_time):
+
+            # Set random current guided by a poisson process (Topic 9 slide 11)
+            poisson_values = np.random.poisson(lam=0.01, size=self.TOTAL_NEURONS)
+            input_current = np.where(poisson_values > 0, 15.0, 0.0)
+            self.network.setCurrent(input_current)
+
+            # Simulate 1ms of the network firings
+            fired_neurons = self.network.update()
+
+            for neuron_idx in fired_neurons:
+                spikes.append((t, neuron_idx))
+
+        return spikes
+
     def raster_plot(self):
         """
         Generates a raster plot of the network's spiking activity.
@@ -276,6 +305,18 @@ class ModularNetworkGenerator:
             raise ValueError("Network has not been generated yet.")
 
         # TODO
+
+    def mean_firing_rate(self):
+        """
+        Plots the mean firing rate of the network.
+
+        Returns:
+        mean_rate -- Mean firing rate in Hz.
+        """
+        if self.network is None:
+            raise ValueError("Network has not been generated yet.")
+
+        pass
 
 
 def main():
@@ -291,12 +332,13 @@ def main():
         # Inhibitory Izhikevich Neuron parameters (from Lecture 2 Topic 4)
         "inhibitory_iz_neuron": {"a": 0.02, "b": 0.25, "c": -65.0, "d": 2.0},
     }
+    simulation_time = 1000  # in ms
 
     # The p values specified in coursework
-    P_VALUES = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    P_VALUES: list[float] = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
 
     # Dictionary to store the generated networks
-    networks = {}
+    networks: dict[float, IzNetwork] = {}
 
     # === 2. Main Loop ===
     print("--- Starting network generation ---")
@@ -309,6 +351,7 @@ def main():
         networks[p] = net
 
         print(f"--- Finished p = {p} ---")
+        print(generator.run_simulation(simulation_time))
 
     print(f"--- All 6 networks generated ---")
 
