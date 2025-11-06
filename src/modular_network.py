@@ -1,5 +1,6 @@
 from src.iznetwork import IzNetwork
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ModularNetworkGenerator:
@@ -297,14 +298,99 @@ class ModularNetworkGenerator:
 
         return spikes
 
-    def raster_plot(self):
+    def connectivity_matrix(
+        self, excitatory_only: bool = False, title="Connection matrix"
+    ):
         """
-        Generates a raster plot of the network's spiking activity.
-        """
-        if self.network is None:
-            raise ValueError("Network has not been generated yet.")
+        Visualize the binary connectivity of a neural network.
 
-        # TODO
+        Parameters
+        ----------
+        W : np.ndarray
+            Synaptic weight matrix where W[i, j] represents the connection
+            strength from neuron i → neuron j.
+        title : str, optional
+            Title of the plot (default = "Connection matrix").
+        """
+        if excitatory_only:
+            n_exc = self.TOTAL_EXCITATORY_NEURONS
+            W = self.W[:n_exc, :n_exc]  # strictly excitatory to excitatory
+            binary_W = (W != 0).astype(int)
+            title = f"{title} (excitatory only)"
+        else:
+            binary_W = (self.W != 0).astype(int)
+
+        plt.figure(figsize=(6, 6))
+        plt.spy(binary_W, markersize=0.2, color="black")
+        plt.title(title, fontsize=14)
+        plt.xlabel("Neuron j")
+        plt.ylabel("Neuron i")
+        plt.tight_layout()
+        plt.show()
+
+    def raster_plot(
+        self,
+        spikes: list[tuple[int, int]],
+        sim_time: int = 1000,
+        excitatory_only: bool = False,
+        y0_on_top: bool = True,
+    ):
+        """
+        Generate a raster plot of neuron firing from precomputed spike data.
+
+        Parameters
+        ----------
+        spikes : list[tuple[int, int]]
+            List of (time, neuron_index) tuples returned by run_simulation().
+        sim_time : int
+            Duration of the simulation in milliseconds (default: 1000 ms).
+        excitatory_only : bool
+            If True, only plot excitatory neurons.
+        y0_on_top : bool
+            If True, show neuron 0 at the top (reverse y-axis).
+        """
+        if not spikes:
+            print("No spikes provided — nothing to plot.")
+            return
+
+        # Unpack spike times and neuron indices
+        spike_times, spike_neurons = zip(*spikes)
+        spike_times = np.array(spike_times)
+        spike_neurons = np.array(spike_neurons)
+
+        # Filter excitatory neurons if requested
+        if excitatory_only:
+            mask = spike_neurons < self.TOTAL_EXCITATORY_NEURONS
+            print(f"Excitatory spikes retained: {np.count_nonzero(mask)}")
+            spike_times = spike_times[mask]
+            spike_neurons = spike_neurons[mask]
+            if spike_times.size == 0:
+                print("No excitatory spikes to plot for the provided data.")
+                return
+            y_max = self.TOTAL_EXCITATORY_NEURONS
+            title_extra = " (excitatory only)"
+        else:
+            y_max = self.TOTAL_NEURONS
+            title_extra = ""
+
+        # Plot
+        fig, ax = plt.subplots(figsize=(12, 3))
+        ax.scatter(spike_times, spike_neurons, s=10, color="blue")
+        plt.title(f"Raster plot (p = {self.p}){title_extra}", fontsize=12)
+        ax.set_xlabel("Time (ms)")
+        ax.set_ylabel("Neuron index")
+
+        # X limits
+        ax.set_xlim(0, sim_time)
+
+        # Y limits (optionally reversed so 0 is at top)
+        if y0_on_top:
+            ax.set_ylim(y_max - 1, 0)  # reversed
+        else:
+            ax.set_ylim(0, y_max - 1)  # normal
+
+        plt.tight_layout()
+        plt.show()
 
     def mean_firing_rate(self):
         """
@@ -347,11 +433,16 @@ def main():
         print(f"--- Generating network for p = {p} ---")
         generator = ModularNetworkGenerator(p, network_params)
 
-        net = generator.generate_modular_network()
-        networks[p] = net
+        generator.generate_modular_network()
+        networks[p] = generator
 
         print(f"--- Finished p = {p} ---")
-        print(generator.run_simulation(simulation_time))
+        # print(generator.run_simulation(simulation_time))
+        spikes = generator.run_simulation(simulation_time)
+
+        title = f"Connection matrix (p = {p})"
+        generator.connectivity_matrix(excitatory_only=True, title=title)
+        # generator.raster_plot(spikes, excitatory_only=True)
 
     print(f"--- All 6 networks generated ---")
 
