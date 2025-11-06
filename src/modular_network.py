@@ -32,6 +32,14 @@ class ModularNetworkGenerator:
         )
         self.TOTAL_NEURONS = self.TOTAL_EXCITATORY_NEURONS + self.INHIBITORY_NEURONS
 
+        self.network: IzNetwork = None
+        # Connectivity and Delay Matrices
+        self.W = np.zeros((self.TOTAL_NEURONS, self.TOTAL_NEURONS))
+        # Initialize all delays to 1ms (since it is the default for
+        # E-I, I-E and I-I connections)
+        # E-E delays will be overwritten
+        self.D = np.ones((self.TOTAL_NEURONS, self.TOTAL_NEURONS), dtype=int)
+
     def _generate_neuron_parameters(
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -215,18 +223,9 @@ class ModularNetworkGenerator:
         Returns:
         network -- An instance of IzNetwork configured with the generated connections.
         """
-
-        # Connectivity and Delay Matrices
-        self.W = np.zeros((self.TOTAL_NEURONS, self.TOTAL_NEURONS))
-        # Initialize all delays to 1ms (since it is the default for
-        # E-I, I-E and I-I connections)
-        # E-E delays will be overwritten
-        self.D = np.ones((self.TOTAL_NEURONS, self.TOTAL_NEURONS), dtype=int)
-
         # === Generate E-E Connections and Rewire ===
         # This is an implementation of the algorithm described in Lecture 4 Topic 8
         # using the weight, scaling factor and delay parameters from Topic 9
-
         print(f"Generating E-E connections for p={self.p}...")
         print(
             f"Creating {self.CONNECTIONS_PER_MODULE * self.NUMBER_OF_MODULES} intra-modular connections"
@@ -261,13 +260,22 @@ class ModularNetworkGenerator:
         print("Configuring IzNetwork instance...")
 
         # Dmax is 20ms from the E-E connections (Topic 9, Slide 4)
-        network = IzNetwork(N=self.TOTAL_NEURONS, Dmax=20)
-        network.setParameters(*self._generate_neuron_parameters())
-        network.setWeights(self.W)
-        network.setDelays(self.D)
+        self.network = IzNetwork(N=self.TOTAL_NEURONS, Dmax=20)
+        self.network.setParameters(*self._generate_neuron_parameters())
+        self.network.setWeights(self.W)
+        self.network.setDelays(self.D)
 
         print(f"Network for p={self.p} generated.")
-        return network
+        return self.network
+
+    def raster_plot(self):
+        """
+        Generates a raster plot of the network's spiking activity.
+        """
+        if self.network is None:
+            raise ValueError("Network has not been generated yet.")
+
+        # TODO
 
 
 def main():
