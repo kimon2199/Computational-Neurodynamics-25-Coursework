@@ -57,17 +57,44 @@ class ModularNetworkGenerator:
         c = np.zeros(self.TOTAL_NEURONS)
         d = np.zeros(self.TOTAL_NEURONS)
 
-        # Set up Izhikevich Parameters for Excitatory Neurons
-        a[: self.TOTAL_EXCITATORY_NEURONS] = self.params["excitatory_iz_neuron"]["a"]
-        b[: self.TOTAL_EXCITATORY_NEURONS] = self.params["excitatory_iz_neuron"]["b"]
-        c[: self.TOTAL_EXCITATORY_NEURONS] = self.params["excitatory_iz_neuron"]["c"]
-        d[: self.TOTAL_EXCITATORY_NEURONS] = self.params["excitatory_iz_neuron"]["d"]
+        excitatory_r = np.random.rand(self.TOTAL_EXCITATORY_NEURONS)
+        inhibitory_r = np.random.rand(self.INHIBITORY_NEURONS)
 
-        # Set up Izhikevich Parameters for Inhibitory Neurons
-        a[self.TOTAL_EXCITATORY_NEURONS :] = self.params["inhibitory_iz_neuron"]["a"]
-        b[self.TOTAL_EXCITATORY_NEURONS :] = self.params["inhibitory_iz_neuron"]["b"]
-        c[self.TOTAL_EXCITATORY_NEURONS :] = self.params["inhibitory_iz_neuron"]["c"]
-        d[self.TOTAL_EXCITATORY_NEURONS :] = self.params["inhibitory_iz_neuron"]["d"]
+        # Set up Izhikevich Parameters for Excitatory Neurons (With Randomness)
+        a[: self.TOTAL_EXCITATORY_NEURONS] = (
+            self.params["excitatory_iz_neuron"]["a"]
+            + self.params["excitatory_iz_neuron"]["a_r"] * excitatory_r**2
+        )
+        b[: self.TOTAL_EXCITATORY_NEURONS] = (
+            self.params["excitatory_iz_neuron"]["b"]
+            + self.params["excitatory_iz_neuron"]["b_r"] * excitatory_r**2
+        )
+        c[: self.TOTAL_EXCITATORY_NEURONS] = (
+            self.params["excitatory_iz_neuron"]["c"]
+            + self.params["excitatory_iz_neuron"]["c_r"] * excitatory_r**2
+        )
+        d[: self.TOTAL_EXCITATORY_NEURONS] = (
+            self.params["excitatory_iz_neuron"]["d"]
+            + self.params["excitatory_iz_neuron"]["d_r"] * excitatory_r**2
+        )
+
+        # Set up Izhikevich Parameters for Inhibitory Neurons (With Randomness)
+        a[self.TOTAL_EXCITATORY_NEURONS :] = (
+            self.params["inhibitory_iz_neuron"]["a"]
+            + self.params["inhibitory_iz_neuron"]["a_r"] * inhibitory_r
+        )
+        b[self.TOTAL_EXCITATORY_NEURONS :] = (
+            self.params["inhibitory_iz_neuron"]["b"]
+            + self.params["inhibitory_iz_neuron"]["b_r"] * inhibitory_r
+        )
+        c[self.TOTAL_EXCITATORY_NEURONS :] = (
+            self.params["inhibitory_iz_neuron"]["c"]
+            + self.params["inhibitory_iz_neuron"]["c_r"] * inhibitory_r
+        )
+        d[self.TOTAL_EXCITATORY_NEURONS :] = (
+            self.params["inhibitory_iz_neuron"]["d"]
+            + self.params["inhibitory_iz_neuron"]["d_r"] * inhibitory_r
+        )
 
         return a, b, c, d
 
@@ -437,15 +464,7 @@ class ModularNetworkGenerator:
         for module_idx in range(
             self.NUMBER_OF_MODULES + (1 if include_inhibitory else 0)
         ):
-            firing_rates = (
-                n_firings[module_idx, :]
-                / (window_size / 1000.0)
-                / (
-                    self.EXCITATORY_PER_MODULE
-                    if module_idx < self.NUMBER_OF_MODULES
-                    else self.INHIBITORY_NEURONS
-                )
-            )  # Hz / neuron
+            firing_rates = n_firings[module_idx, :] / window_size  # firings per ms
 
             label = (
                 f"Module {module_idx + 1}"
@@ -459,7 +478,7 @@ class ModularNetworkGenerator:
             )
 
         plt.xlabel("Time (ms)")
-        plt.ylabel("Mean Firing Rate (Hz) per Neuron")
+        plt.ylabel("Mean Firing Rate (firings/ms) per Neuron")
         plt.title("Mean Firing Rate Over Time")
         plt.legend()
         plt.show()
@@ -474,9 +493,27 @@ def main():
         "INHIBITORY_NEURONS": 200,
         "CONNECTIONS_PER_MODULE": 1000,
         # Excitatory Izhikevich Neuron parameters (from Lecture 2 Topic 4)
-        "excitatory_iz_neuron": {"a": 0.02, "b": 0.2, "c": -65.0, "d": 8.0},
+        "excitatory_iz_neuron": {
+            "a": 0.02,
+            "b": 0.2,
+            "c": -65.0,
+            "d": 8.0,
+            "a_r": 0.0,
+            "b_r": 0.0,
+            "c_r": 15.0,
+            "d_r": -6.0,
+        },
         # Inhibitory Izhikevich Neuron parameters (from Lecture 2 Topic 4)
-        "inhibitory_iz_neuron": {"a": 0.02, "b": 0.25, "c": -65.0, "d": 2.0},
+        "inhibitory_iz_neuron": {
+            "a": 0.02,
+            "b": 0.25,
+            "c": -65.0,
+            "d": 2.0,
+            "a_r": 0.08,
+            "b_r": -0.05,
+            "c_r": 0.0,
+            "d_r": 0.0,
+        },
     }
     simulation_time = 1000  # in ms
 
