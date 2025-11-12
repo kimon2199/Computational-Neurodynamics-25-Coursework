@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class ModularNetworkGenerator:
+class ModularNetwork:
     """
     Class to generate modular Izhikevich networks with specified rewiring
     probability p.
@@ -197,7 +197,7 @@ class ModularNetworkGenerator:
 
         return rewired_count
 
-    def _create_ei_connections(self):
+    def _generate_ei_connections(self):
         """
         Creates Focal E-I connections.
         1. Every E-neuron sends exactly ONE connection (mentined on EdStem)
@@ -237,7 +237,7 @@ class ModularNetworkGenerator:
                 # Set delay (1ms)
                 self.D[src_node, tgt_inh_idx] = 1
 
-    def _create_ie_connections(self):
+    def _generate_ie_connections(self):
         """
         Creates Focal I-E connections as specified in Topic 9.
         """
@@ -248,7 +248,7 @@ class ModularNetworkGenerator:
                 # Set delay (1ms)
                 self.D[src_inh_idx, tgt_exc_idx] = 1
 
-    def _create_ii_connections(self):
+    def _generate_ii_connections(self):
         """
         Creates Focal I-I connections as specified in Topic 9.
         """
@@ -292,13 +292,13 @@ class ModularNetworkGenerator:
         print("Generating inhibitory connections...")
 
         # A. E-I Connections (Focal)
-        self._create_ei_connections()
+        self._generate_ei_connections()
 
         # B. I-E Connections (Diffuse)
-        self._create_ie_connections()
+        self._generate_ie_connections()
 
         # C. I-I Connections (Diffuse)
-        self._create_ii_connections()
+        self._generate_ii_connections()
 
         # === 4. Finalizing the Network ===
         print("Configuring IzNetwork instance...")
@@ -342,7 +342,11 @@ class ModularNetworkGenerator:
         return spikes
 
     def connectivity_matrix(
-        self, excitatory_only: bool = False, title="Connection matrix"
+        self,
+        excitatory_only: bool = False,
+        title="Connection matrix",
+        save_plot: bool = False,
+        plot_filename: str = "connection_matrix.svg",
     ):
         """
         Visualize the binary connectivity of a neural network.
@@ -354,6 +358,10 @@ class ModularNetworkGenerator:
             strength from neuron i → neuron j.
         title : str, optional
             Title of the plot (default = "Connection matrix").
+        save_plot : bool
+            If True, saves the plot as an SVG file.
+        plot_filename : str
+            Filename for saving the plot (default = "connection_matrix.svg").
         """
         if excitatory_only:
             n_exc = self.TOTAL_EXCITATORY_NEURONS
@@ -369,6 +377,9 @@ class ModularNetworkGenerator:
         plt.xlabel("Neuron j")
         plt.ylabel("Neuron i")
         plt.tight_layout()
+        if save_plot:
+            plt.savefig(plot_filename, format="svg")
+            print(f"Connection matrix plot saved as {plot_filename}")
         plt.show()
 
     def raster_plot(
@@ -377,6 +388,8 @@ class ModularNetworkGenerator:
         sim_time: int = 1000,
         excitatory_only: bool = False,
         y0_on_top: bool = True,
+        save_plot: bool = False,
+        plot_filename: str = "raster_plot.svg",
     ):
         """
         Generate a raster plot of neuron firing from precomputed spike data.
@@ -391,6 +404,10 @@ class ModularNetworkGenerator:
             If True, only plot excitatory neurons.
         y0_on_top : bool
             If True, show neuron 0 at the top (reverse y-axis).
+        save_plot : bool
+            If True, saves the plot as an SVG file.
+        plot_filename : str
+            Filename for saving the plot (default = "raster_plot.svg").
         """
         if not spikes:
             print("No spikes provided — nothing to plot.")
@@ -433,6 +450,9 @@ class ModularNetworkGenerator:
             ax.set_ylim(0, y_max - 1)  # normal
 
         plt.tight_layout()
+        if save_plot:
+            plt.savefig(plot_filename, format="svg")
+            print(f"Raster plot saved as {plot_filename}")
         plt.show()
 
     def mean_firing_rate(
@@ -442,6 +462,8 @@ class ModularNetworkGenerator:
         window_size: int,
         step_size: int,
         include_inhibitory: bool = True,
+        save_plot: bool = False,
+        plot_filename: str = "mean_firing_rate.svg",
     ):
         """
         Plots the mean firing rate of the network.
@@ -451,6 +473,9 @@ class ModularNetworkGenerator:
         sim_time    -- Total simulation time in ms.
         window_size -- Size of the sliding window in ms.
         step_size   -- Step size for the sliding window in ms.
+        include_inhibitory -- If True, includes inhibitory neurons in the plot.
+        save_plot -- If True, saves the plot as an SVG file.
+        plot_filename -- Filename for saving the plot (default = "mean_firing_rate.svg").
         """
         if self.network is None:
             raise ValueError("Network has not been generated yet.")
@@ -497,6 +522,9 @@ class ModularNetworkGenerator:
         plt.ylabel("Mean Firing Rate (firings/ms) per Neuron")
         plt.title("Mean Firing Rate Over Time")
         plt.legend()
+        if save_plot:
+            plt.savefig(plot_filename, format="svg")
+            print(f"Mean firing rate plot saved as {plot_filename}")
         plt.show()
 
 
@@ -544,7 +572,7 @@ def main():
 
     for p in P_VALUES:
         print(f"--- Generating network for p = {p} ---")
-        generator = ModularNetworkGenerator(p, network_params)
+        generator = ModularNetwork(p, network_params)
 
         generator.generate_modular_network()
         networks[p] = generator
@@ -554,14 +582,26 @@ def main():
         spikes = generator.run_simulation(simulation_time)
 
         title = f"Connection matrix (p = {p})"
-        generator.connectivity_matrix(excitatory_only=True, title=title)
-        generator.raster_plot(spikes, excitatory_only=True)
+        generator.connectivity_matrix(
+            excitatory_only=True,
+            title=title,
+            save_plot=True,
+            plot_filename=f"plots/connection_matrix_p{p}.svg",
+        )
+        generator.raster_plot(
+            spikes,
+            excitatory_only=True,
+            save_plot=True,
+            plot_filename=f"plots/raster_plot_p{p}.svg",
+        )
         generator.mean_firing_rate(
             spikes,
             simulation_time,
             window_size=50,
             step_size=20,
             include_inhibitory=False,
+            save_plot=True,
+            plot_filename=f"plots/mean_firing_rate_p{p}.svg",
         )
 
     print(f"--- All 6 networks generated ---")
