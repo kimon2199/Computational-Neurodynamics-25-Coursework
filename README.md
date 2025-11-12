@@ -1,4 +1,4 @@
-# Computational-Neurodynamics-25-Coursework
+# Modular Network Simulation with Izhikevich Neurons
 
 ## Structure and dependencies
 
@@ -16,7 +16,7 @@ We decided to create a class that represents a modular network of Izhikevich neu
   - `W`: connectivity matrix with synaptic weights between neurons. It is created in the `generate_modular_network` method.
   - `D`: delay matrix with synaptic delays between neurons. It is created in the `generate_modular_network` method.
 - **Methods:**
-  - `__init__(self, p: float, params: dict)`: constructor method that initializes the class attributes. It takes the rewiring probability `p` and a dictionary of parameters `params` as input.
+  - `__init__(self, p, params)`: constructor method that initializes the class attributes. It takes the rewiring probability `p` and a dictionary of parameters `params` as input.
   - `_generate_neuron_parameters(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]`: private method that generates the parameters for each neuron in the network, adding some noise to the base parameters. It returns four arrays: `a`, `b`, `c`, and `d`.
   - `_generate_ee_connections(self) -> list[tuple[int, int]]`: private method that creates excitatory-excitatory connections using the Watts-Strogatz small-world model. It returns a list of tuples representing the connections.
   - `_generate_ei_connections(self)`: private method that creates excitatory-inhibitory connections.
@@ -24,9 +24,15 @@ We decided to create a class that represents a modular network of Izhikevich neu
   - `_generate_ii_connections(self)`: private method that creates inhibitory-inhibitory connections.
   - `_rewire_ee_connections(self) -> int`: private method that rewires the excitatory-excitatory connections based on the rewiring probability `p`. It returns the number of connections that were rewired.
   - `generate_modular_network(self) -> IzNetwork`: public method that generates the modular network by calling the private methods to create connections and rewiring, using the provided IzNetwork class. It returns the instance of IzNetwork that is created.
-  - `run_simulation(self, sim_time: int) -> list[tuple[int, int]]`: public method that simulates the network dynamics over a specified simulation time `sim_time`. It returns a list of tuples representing the spike times and neuron indices.
+  - `run_simulation(self, sim_time) -> list[tuple[int, int]]`: public method that simulates the network dynamics over a specified simulation time `sim_time`. It returns a list of tuples representing the spike times and neuron indices.
+  - `connectivity_matrix`(self, excitatory_only, title, save_plot, plot_filename): public method that plots the connectivity matrix of the network. If `excitatory_only` is True, it only shows excitatory neurons.
+  - `raster_plot(self, spikes, sim_time, excitatory_only, y0_on_top, save_plot, plot_filename)`: public method that creates a raster plot of the spike times. If `excitatory_only` is True, it only shows excitatory neurons. If `y0_on_top` is True, it inverts the y-axis.
+  - `mean_firing_rate(self, activations, sim_time, window_size, step_size, include_inhibitory, save_plot, plot_filename)`: public method that calculates and plots the mean firing rate over time. If `include_inhibitory` is True, it includes inhibitory neurons in the calculation.
 
-  
+
+Lastly, the `main` function runs the simulations for different rewiring probabilities and generates the required plots.
+
+<div style="break-before: page;"></div>  
 
 ## Plots
 
