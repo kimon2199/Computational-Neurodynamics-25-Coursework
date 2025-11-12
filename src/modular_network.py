@@ -200,30 +200,46 @@ class ModularNetworkGenerator:
     def _create_ei_connections(self):
         """
         Creates Focal E-I connections.
+        1. Every E-neuron sends exactly ONE connection (mentined on EdStem)
+        2. Every I-neuron receives exactly FOUR connections (mentioned in Topic 9)
         """
-        # 200 inh neurons, 8 modules -> 25 inh neurons per module //TODO:maybe random
+        # 200 inh neurons, 8 modules -> 25 inh neurons per module
         inh_per_module = self.INHIBITORY_NEURONS // self.NUMBER_OF_MODULES
-        for i_inh in range(self.INHIBITORY_NEURONS):
-            inh_neuron_idx = self.TOTAL_EXCITATORY_NEURONS + i_inh
-            # Find which module this inh neuron belongs to
-            module_idx = i_inh // inh_per_module
-
-            mod_start = module_idx * self.EXCITATORY_PER_MODULE
-            mod_end = (module_idx + 1) * self.EXCITATORY_PER_MODULE
-
-            # Randomly choose 4 unique source neurons from this module
-            # (as per Topic 9)
-            src_list = np.random.choice(range(mod_start, mod_end), 4, replace=False)
-
-            for src_node in src_list:
+        
+        # Loop through each module to create a perfect 100-to-25 mapping
+        for module_idx in range(self.NUMBER_OF_MODULES):
+            
+            # --- Get the 100 E-neurons for this module ---
+            mod_exc_start = module_idx * self.EXCITATORY_PER_MODULE
+            mod_exc_end = (module_idx + 1) * self.EXCITATORY_PER_MODULE
+            e_neurons_in_module = np.arange(mod_exc_start, mod_exc_end)
+            
+            # --- Get the 25 I-neurons for this module ---
+            mod_inh_start = self.TOTAL_EXCITATORY_NEURONS + (module_idx * inh_per_module)
+            mod_inh_end = self.TOTAL_EXCITATORY_NEURONS + ((module_idx + 1) * inh_per_module)
+            i_neurons_in_module = np.arange(mod_inh_start, mod_inh_end)
+            
+            # --- Create a "target list" ---
+            # This list will have 100 items (4 * 25).
+            # Each of the 25 I-neurons appears exactly 4 times.
+            target_list = np.repeat(i_neurons_in_module, 4)
+            
+            # --- Shuffle the target list ---
+            # This randomizes which 4 E-neurons map to which I-neuron.
+            np.random.shuffle(target_list)
+            
+            # --- Create the guaranteed connections ---
+            # e_neurons_in_module[i] maps to target_list[i]
+            for src_node, tgt_inh_idx in zip(e_neurons_in_module, target_list):
+                # Create the connection
                 # Set weight (rand(0,1) * 50)
-                self.W[src_node, inh_neuron_idx] = np.random.rand() * 50.0  # <-- Use W
+                self.W[src_node, tgt_inh_idx] = np.random.rand() * 50.0
                 # Set delay (1ms)
-                self.D[src_node, inh_neuron_idx] = 1
+                self.D[src_node, tgt_inh_idx] = 1
 
     def _create_ie_connections(self):
         """
-        Creates Focal I-E connections as specified in Topic 9, slide 1.
+        Creates Focal I-E connections as specified in Topic 9.
         """
         for src_inh_idx in range(self.TOTAL_EXCITATORY_NEURONS, self.TOTAL_NEURONS):
             for tgt_exc_idx in range(self.TOTAL_EXCITATORY_NEURONS):
@@ -234,7 +250,7 @@ class ModularNetworkGenerator:
 
     def _create_ii_connections(self):
         """
-        Creates Focal I-I connections as specified in Topic 9, slide 1.
+        Creates Focal I-I connections as specified in Topic 9.
         """
         for src_inh_idx in range(self.TOTAL_EXCITATORY_NEURONS, self.TOTAL_NEURONS):
             for tgt_inh_idx in range(self.TOTAL_EXCITATORY_NEURONS, self.TOTAL_NEURONS):
