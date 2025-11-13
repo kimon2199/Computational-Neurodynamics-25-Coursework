@@ -1,5 +1,6 @@
 from src.iznetwork import IzNetwork
 import numpy as np
+import argparse
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.pyplot as plt
 import os
@@ -386,7 +387,9 @@ class ModularNetwork:
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Connection matrix plot saved as {plot_filename}")
-        # plt.show()
+            plt.close()
+        else:
+            plt.show()
 
     def raster_plot(
         self,
@@ -459,7 +462,9 @@ class ModularNetwork:
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Raster plot saved as {plot_filename}")
-        # plt.show()
+            plt.close()
+        else:
+            plt.show()
 
     def mean_firing_rate(
         self,
@@ -531,7 +536,9 @@ class ModularNetwork:
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Mean firing rate plot saved as {plot_filename}")
-        # plt.show()
+            plt.close()
+        else:
+            plt.show()
 
     def visualize_simulation(
         self,
@@ -758,8 +765,24 @@ class ModularNetwork:
 
 
 def main():
+
+    # === 1. Parse arguments ===
+    # Initialize the parser
+    parser = argparse.ArgumentParser(description="A modular network simulation.")
+
+    # Add arguments
+    parser.add_argument(
+        "-v", 
+        "--visualize",
+        action="store_true",
+        help="If present, we will plot a visualization of the network simulation.",
+    )
+
+    args = parser.parse_args()
+
     os.makedirs("plots", exist_ok=True)
-    # === Global Parameters ===
+    
+    # === 2. Global Parameters ===
     network_params = {
         # Modular Networks Experimental Setup (from Lecture 4 Topic 9)
         "NUMBER_OF_MODULES": 8,
@@ -797,7 +820,7 @@ def main():
     # Dictionary to store the generated networks
     networks: dict[float, IzNetwork] = {}
 
-    # === 2. Main Loop ===
+    # === 3. Main Loop ===
     print("--- Starting network generation ---")
 
     for p in P_VALUES:
@@ -832,13 +855,14 @@ def main():
             save_plot=True,
             plot_filename=f"plots/mean_firing_rate_p{p}.svg",
         )
-        generator.visualize_simulation(
-            spikes,
-            simulation_time,
-            # save_animation=True,
-            # animation_filename=f"plots/network_animation_p{p}.gif",
-            fps=60,
-        )
+        if args.visualize:
+            generator.visualize_simulation(
+                spikes,
+                simulation_time,
+                save_animation=False,
+                animation_filename=f"plots/network_animation_p{p}.gif",
+                fps=60,
+            )
 
     print(f"--- All 6 networks generated ---")
 
