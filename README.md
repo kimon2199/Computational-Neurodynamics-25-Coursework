@@ -56,7 +56,7 @@ We decided to create a class that represents a modular network of Izhikevich neu
 
 - `generate_modular_network()` builds the network by calling the internal helper methods for connection generation and neuron parameter setup.
 - `run_simulation()` then uses the generated `IzNetwork` to simulate neuronal activity over time and record spike events.
-- Finally, the plotting methods (`connectivity_matrix`, `raster_plot`, and `mean_firing_rate`) visualize the network’s structure and dynamics.
+- Finally, the plotting methods (`connectivity_matrix`, `raster_plot`, `mean_firing_rate`, and optionally `visualize_simulation`) visualize the network’s structure and dynamics.
 
 ### Instructions to Run
 
@@ -76,7 +76,7 @@ We decided to create a class that represents a modular network of Izhikevich neu
 
       **Note:** When this flag is set, you will see the animation at runtime, but the program will **not** save the animations to the `plots/` folder. The live animation itself is not saved as a GIF because the process is very time-consuming.
 
-      You can see pre-rendered examples of these animations by scrolling to the bottom of the `README.md` on our [GitHub repository](https://github.com/kimon2199/Computational-Neurodynamics-25-Coursework/tree/f/extra_plot).
+      You can see pre-rendered examples of these animations by scrolling to the bottom of the `README.md` on our [GitHub repository](https://github.com/kimon2199/Computational-Neurodynamics-25-Coursework/).
 
 3. The program will automatically create a folder named plots/, which will contain all generated visualizations (connection matrices, raster plots, and firing rate plots).
 
