@@ -38,6 +38,15 @@ We decided to create a class that represents a modular network of Izhikevich neu
 - `run_simulation()` then uses the generated `IzNetwork` to simulate neuronal activity over time and record spike events.
 - Finally, the plotting methods (`connectivity_matrix`, `raster_plot`, and `mean_firing_rate`) visualize the network’s structure and dynamics.
 
+**Instructions to Run the Code**
+
+1. Ensure that the file `iznetwork.py` is available and located in the same directory as `modular_network.py`.
+2. Run the simulation using:
+   ```bash
+   python3 modular_network.py
+   ```
+3. The program will automatically create a folder named plots/, which will contain all generated visualizations (connection matrices, raster plots, and firing rate plots).
+
 <div style="break-before: page;"></div>
 
 ## Plots

@@ -385,7 +385,7 @@ class ModularNetwork:
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Connection matrix plot saved as {plot_filename}")
-        plt.show()
+        # plt.show()
 
     def raster_plot(
         self,
@@ -458,7 +458,7 @@ class ModularNetwork:
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Raster plot saved as {plot_filename}")
-        plt.show()
+        # plt.show()
 
     def mean_firing_rate(
         self,
@@ -525,12 +525,12 @@ class ModularNetwork:
 
         plt.xlabel("Time (ms)")
         plt.ylabel("Mean Firing Rate (firings/ms) per Neuron")
-        plt.title("Mean Firing Rate Over Time")
+        plt.title(f"Mean Firing Rate Over Time (p = {self.p})")
         plt.legend()
         if save_plot:
             plt.savefig(plot_filename, format="svg")
             print(f"Mean firing rate plot saved as {plot_filename}")
-        plt.show()
+        # plt.show()
 
 
 def main():
