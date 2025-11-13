@@ -3,6 +3,7 @@
 ## Structure and dependencies
 
 We decided to create a class that represents a modular network of Izhikevich neurons, as there are many parameters that are shared between functions. We divided the code into several private methods and helper functions to improve readability and reusability. The public methods are `generate_modular_network`, to create the basic network structure; `run_simulation`, to simulate the behaviour of the network over time, and all the different necessary plotting functions. An overview of the class attributes and methods goes as follows:
+
 - **Attributes:**
   - `p`: rewiring probability for the small-world network.
   - `params`: dictionary containing all the parameters for the simulation. They are unpacked to class attributes. These parameters are:
@@ -29,10 +30,15 @@ We decided to create a class that represents a modular network of Izhikevich neu
   - `raster_plot(self, spikes, sim_time, excitatory_only, y0_on_top, save_plot, plot_filename)`: public method that creates a raster plot of the spike times. If `excitatory_only` is True, it only shows excitatory neurons. If `y0_on_top` is True, it inverts the y-axis.
   - `mean_firing_rate(self, activations, sim_time, window_size, step_size, include_inhibitory, save_plot, plot_filename)`: public method that calculates and plots the mean firing rate over time. If `include_inhibitory` is True, it includes inhibitory neurons in the calculation.
 
+**Method Flow Summary:**  
+ The overall program flow begins in the `main()` method, which initializes the parameters and creates a `ModularNetwork` instance for each rewiring probability `p`.  
+ For each instance:
 
-Lastly, the `main` function runs the simulations for different rewiring probabilities and generates the required plots.
+- `generate_modular_network()` builds the network by calling the internal helper methods for connection generation and neuron parameter setup.
+- `run_simulation()` then uses the generated `IzNetwork` to simulate neuronal activity over time and record spike events.
+- Finally, the plotting methods (`connectivity_matrix`, `raster_plot`, and `mean_firing_rate`) visualize the network’s structure and dynamics.
 
-<div style="break-before: page;"></div>  
+<div style="break-before: page;"></div>
 
 ## Plots
 
@@ -40,14 +46,16 @@ Lastly, the `main` function runs the simulations for different rewiring probabil
 
 <table>
 <tr>
-<td><img src="plots/connection_matrix_p0.0.svg" width="300" alt="Matrix p=0.0"/></td>
-<td><img src="plots/connection_matrix_p0.1.svg" width="300" alt="Matrix p=0.1"/></td>
-<td><img src="plots/connection_matrix_p0.2.svg" width="300" alt="Matrix p=0.2"/></td>
+<td><img src="plots/connection_matrix_p0.0.svg" width="100%" alt="Matrix p=0.0"/></td>
+<td><img src="plots/connection_matrix_p0.1.svg" width="100%" alt="Matrix p=0.1"/></td>
 </tr>
 <tr>
-<td><img src="plots/connection_matrix_p0.3.svg" width="300" alt="Matrix p=0.3"/></td>
-<td><img src="plots/connection_matrix_p0.4.svg" width="300" alt="Matrix p=0.4"/></td>
-<td><img src="plots/connection_matrix_p0.5.svg" width="300" alt="Matrix p=0.5"/></td>
+<td><img src="plots/connection_matrix_p0.2.svg" width="100%" alt="Matrix p=0.2"/></td>
+<td><img src="plots/connection_matrix_p0.3.svg" width="100%" alt="Matrix p=0.3"/></td>
+</tr>
+<tr>
+<td><img src="plots/connection_matrix_p0.4.svg" width="100%" alt="Matrix p=0.4"/></td>
+<td><img src="plots/connection_matrix_p0.5.svg" width="100%" alt="Matrix p=0.5"/></td>
 </tr>
 </table>
 
@@ -55,14 +63,22 @@ Lastly, the `main` function runs the simulations for different rewiring probabil
 
 <table>
 <tr>
-<td><img src="plots/raster_plot_p0.0.svg" width="300" alt="Raster p=0.0"/></td>
-<td><img src="plots/raster_plot_p0.1.svg" width="300" alt="Raster p=0.1"/></td>
-<td><img src="plots/raster_plot_p0.2.svg" width="300" alt="Raster p=0.2"/></td>
+<td><img src="plots/raster_plot_p0.0.svg" width="100%" alt="Raster p=0.0"/></td>
 </tr>
 <tr>
-<td><img src="plots/raster_plot_p0.3.svg" width="300" alt="Raster p=0.3"/></td>
-<td><img src="plots/raster_plot_p0.4.svg" width="300" alt="Raster p=0.4"/></td>
-<td><img src="plots/raster_plot_p0.5.svg" width="300" alt="Raster p=0.5"/></td>
+<td><img src="plots/raster_plot_p0.1.svg" width="100%" alt="Raster p=0.1"/></td>
+</tr>
+<tr>
+<td><img src="plots/raster_plot_p0.2.svg" width="100%" alt="Raster p=0.2"/></td>
+</tr>
+<tr>
+<td><img src="plots/raster_plot_p0.3.svg" width="100%" alt="Raster p=0.3"/></td>
+</tr>
+<tr>
+<td><img src="plots/raster_plot_p0.4.svg" width="100%" alt="Raster p=0.4"/></td>
+</tr>
+<tr>
+<td><img src="plots/raster_plot_p0.5.svg" width="100%" alt="Raster p=0.5"/></td>
 </tr>
 </table>
 
@@ -70,13 +86,21 @@ Lastly, the `main` function runs the simulations for different rewiring probabil
 
 <table>
 <tr>
-<td><img src="plots/mean_firing_rate_p0.0.svg" width="300" alt="Mean Firing Rate p=0.0"/></td>
-<td><img src="plots/mean_firing_rate_p0.1.svg" width="300" alt="Mean Firing Rate p=0.1"/></td>
-<td><img src="plots/mean_firing_rate_p0.2.svg" width="300" alt="Mean Firing Rate p=0.2"/></td>
+<td><img src="plots/mean_firing_rate_p0.0.svg" width="100%" alt="Mean Firing Rate p=0.0"/></td>
 </tr>
 <tr>
-<td><img src="plots/mean_firing_rate_p0.3.svg" width="300" alt="Mean Firing Rate p=0.3"/></td>
-<td><img src="plots/mean_firing_rate_p0.4.svg" width="300" alt="Mean Firing Rate p=0.4"/></td>
-<td><img src="plots/mean_firing_rate_p0.5.svg" width="300" alt="Mean Firing Rate p=0.5"/></td>
+<td><img src="plots/mean_firing_rate_p0.1.svg" width="100%" alt="Mean Firing Rate p=0.1"/></td>
+</tr>
+<tr>
+<td><img src="plots/mean_firing_rate_p0.2.svg" width="100%" alt="Mean Firing Rate p=0.2"/></td>
+</tr>
+<tr>
+<td><img src="plots/mean_firing_rate_p0.3.svg" width="100%" alt="Mean Firing Rate p=0.3"/></td>
+</tr>
+<tr>
+<td><img src="plots/mean_firing_rate_p0.4.svg" width="100%" alt="Mean Firing Rate p=0.4"/></td>
+</tr>
+<tr>
+<td><img src="plots/mean_firing_rate_p0.5.svg" width="100%" alt="Mean Firing Rate p=0.5"/></td>
 </tr>
 </table>

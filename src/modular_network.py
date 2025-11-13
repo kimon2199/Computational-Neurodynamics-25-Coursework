@@ -1,6 +1,7 @@
 from src.iznetwork import IzNetwork
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 class ModularNetwork:
@@ -205,29 +206,33 @@ class ModularNetwork:
         """
         # 200 inh neurons, 8 modules -> 25 inh neurons per module
         inh_per_module = self.INHIBITORY_NEURONS // self.NUMBER_OF_MODULES
-        
+
         # Loop through each module to create a perfect 100-to-25 mapping
         for module_idx in range(self.NUMBER_OF_MODULES):
-            
+
             # --- Get the 100 E-neurons for this module ---
             mod_exc_start = module_idx * self.EXCITATORY_PER_MODULE
             mod_exc_end = (module_idx + 1) * self.EXCITATORY_PER_MODULE
             e_neurons_in_module = np.arange(mod_exc_start, mod_exc_end)
-            
+
             # --- Get the 25 I-neurons for this module ---
-            mod_inh_start = self.TOTAL_EXCITATORY_NEURONS + (module_idx * inh_per_module)
-            mod_inh_end = self.TOTAL_EXCITATORY_NEURONS + ((module_idx + 1) * inh_per_module)
+            mod_inh_start = self.TOTAL_EXCITATORY_NEURONS + (
+                module_idx * inh_per_module
+            )
+            mod_inh_end = self.TOTAL_EXCITATORY_NEURONS + (
+                (module_idx + 1) * inh_per_module
+            )
             i_neurons_in_module = np.arange(mod_inh_start, mod_inh_end)
-            
+
             # --- Create a "target list" ---
             # This list will have 100 items (4 * 25).
             # Each of the 25 I-neurons appears exactly 4 times.
             target_list = np.repeat(i_neurons_in_module, 4)
-            
+
             # --- Shuffle the target list ---
             # This randomizes which 4 E-neurons map to which I-neuron.
             np.random.shuffle(target_list)
-            
+
             # --- Create the guaranteed connections ---
             # e_neurons_in_module[i] maps to target_list[i]
             for src_node, tgt_inh_idx in zip(e_neurons_in_module, target_list):
@@ -529,6 +534,7 @@ class ModularNetwork:
 
 
 def main():
+    os.makedirs("plots", exist_ok=True)
     # === Global Parameters ===
     network_params = {
         # Modular Networks Experimental Setup (from Lecture 4 Topic 9)
