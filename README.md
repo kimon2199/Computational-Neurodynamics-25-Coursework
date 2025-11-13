@@ -113,3 +113,28 @@ We decided to create a class that represents a modular network of Izhikevich neu
 <td><img src="plots/mean_firing_rate_p0.5.svg" width="100%" alt="Mean Firing Rate p=0.5"/></td>
 </tr>
 </table>
+
+### Network Visualization
+
+(These might take a few seconds to load)
+
+<table>
+<tr>
+<td><img src="plots/network_animation_p0.0.gif" width="100%" alt="Network Visualization p=0.0"/></td>
+</tr>
+<tr>
+<td><img src="plots/network_animation_p0.1.gif" width="100%" alt="Network Visualization p=0.1"/></td>
+</tr>
+<tr>
+<td><img src="plots/network_animation_p0.2.gif" width="100%" alt="Network Visualization p=0.2"/></td>
+</tr>
+<tr>
+<td><img src="plots/network_animation_p0.3.gif" width="100%" alt="Network Visualization p=0.3"/></td>
+</tr>
+<tr>
+<td><img src="plots/network_animation_p0.4.gif" width="100%" alt="Network Visualization p=0.4"/></td>
+</tr>
+<tr>
+<td><img src="plots/network_animation_p0.5.gif" width="100%" alt="Network Visualization p=0.5"/></td>
+</tr>
+</table>
