@@ -1,5 +1,6 @@
 from src.iznetwork import IzNetwork
 import numpy as np
+from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.pyplot as plt
 import os
 
@@ -532,6 +533,245 @@ class ModularNetwork:
             print(f"Mean firing rate plot saved as {plot_filename}")
         # plt.show()
 
+    def visualize_simulation(
+        self,
+        activations: list[tuple[int, int]],
+        sim_time: int,
+        save_animation: bool = False,
+        animation_filename: str = "network_animation.gif",
+        fps: int = 30,
+    ):
+        """
+        Show the spatial positions of neurons in the network
+        and their activations over time.
+
+        Parameters
+        ----------
+        activations : list[tuple[int, int]]
+            List of (time, neuron_index) tuples from simulation.
+        sim_time : int
+            Total simulation time in milliseconds.
+        save_animation : bool
+            If True, saves the animation as a GIF file.
+        animation_filename : str
+            Filename for saving the animation (default = "network_animation.gif").
+        fps : int
+            Frames per second for the animation (default = 30).
+        """
+        if self.network is None:
+            raise ValueError("Network has not been generated yet.")
+
+        # ===== Calculate neuron positions =====
+        neuron_positions = np.zeros((self.TOTAL_NEURONS, 2))
+
+        # Determine which module each inhibitory neuron belongs to
+        inh_per_module = self.INHIBITORY_NEURONS // self.NUMBER_OF_MODULES
+        inh_module_assignment = np.zeros(self.INHIBITORY_NEURONS, dtype=int)
+        for module_idx in range(self.NUMBER_OF_MODULES):
+            start_idx = module_idx * inh_per_module
+            end_idx = (module_idx + 1) * inh_per_module
+            inh_module_assignment[start_idx:end_idx] = module_idx
+
+        # Position inhibitory neurons in sectors pointing toward their modules
+        inh_radius = 1.5  # max radius for inhibitory cluster
+        inh_start = self.TOTAL_EXCITATORY_NEURONS
+
+        for module_idx in range(self.NUMBER_OF_MODULES):
+            # Angle for this module (same as excitatory module center)
+            module_angle = 2 * np.pi * module_idx / self.NUMBER_OF_MODULES
+            # Angular spread for this sector (with some overlap)
+            angle_spread = 2 * np.pi / self.NUMBER_OF_MODULES * 0.8
+
+            # Position inhibitory neurons for this module
+            start_idx = module_idx * inh_per_module
+            end_idx = (module_idx + 1) * inh_per_module
+
+            for i in range(start_idx, end_idx):
+                # Random radius biased toward outer edge (closer to module)
+                radius = np.abs(np.random.normal(0.6 * inh_radius, 0.2 * inh_radius))
+                radius = min(radius, inh_radius)
+
+                # Random angle within this module's sector
+                angle = module_angle + np.random.uniform(
+                    -angle_spread / 2, angle_spread / 2
+                )
+
+                neuron_positions[inh_start + i] = [
+                    radius * np.cos(angle),
+                    radius * np.sin(angle),
+                ]
+
+        # Position excitatory neurons in modules around the inhibitory circle
+        module_radius = 0.8  # max radius of each module circle
+        module_ring_radius = 3.5  # distance from center to each module center
+
+        for module_idx in range(self.NUMBER_OF_MODULES):
+            # Angle for this module's center
+            module_angle = 2 * np.pi * module_idx / self.NUMBER_OF_MODULES
+
+            # Center position of this module
+            module_center_x = module_ring_radius * np.cos(module_angle)
+            module_center_y = module_ring_radius * np.sin(module_angle)
+
+            # Position neurons within this module as a filled circle
+            mod_start = module_idx * self.EXCITATORY_PER_MODULE
+            for i in range(self.EXCITATORY_PER_MODULE):
+                neuron_idx = mod_start + i
+                # Random radius with normal distribution (fill the circle)
+                # Using mean=0.5*module_radius and std=0.2*module_radius for good spread
+                radius = np.abs(
+                    np.random.normal(0.5 * module_radius, 0.2 * module_radius)
+                )
+                # Clip to ensure we stay within module_radius
+                radius = min(radius, module_radius)
+
+                # Random angle for this neuron
+                neuron_angle = 2 * np.pi * np.random.rand()
+
+                neuron_positions[neuron_idx] = [
+                    module_center_x + radius * np.cos(neuron_angle),
+                    module_center_y + radius * np.sin(neuron_angle),
+                ]
+
+        # Organize activations by time
+        activations_by_time = [[] for _ in range(sim_time)]
+        for t, neuron_idx in activations:
+            if 0 <= t < sim_time:
+                activations_by_time[t].append(neuron_idx)
+
+        # ===== Set up the plot =====
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.set_xlim(-5.5, 5.5)
+        ax.set_ylim(-5.5, 5.5)
+        ax.set_aspect("equal")
+        ax.axis("off")
+
+        # Create a colormap for modules
+        cmap = plt.colormaps.get_cmap("tab10")
+        module_colors = [cmap(i) for i in range(self.NUMBER_OF_MODULES)]
+
+        # Color excitatory neurons according to their module
+        exc_colors = []
+        for neuron_idx in range(self.TOTAL_EXCITATORY_NEURONS):
+            module_idx = neuron_idx // self.EXCITATORY_PER_MODULE
+            exc_colors.append(module_colors[module_idx])
+
+        # Plot excitatory neurons with module colors
+        excitatory_scatter = ax.scatter(
+            neuron_positions[: self.TOTAL_EXCITATORY_NEURONS, 0],
+            neuron_positions[: self.TOTAL_EXCITATORY_NEURONS, 1],
+            s=20,
+            c=exc_colors,
+            alpha=0.5,
+            edgecolors="darkblue",
+            linewidths=0.3,
+            label="Excitatory",
+        )
+
+        # Color inhibitory neurons according to their module assignment
+        inh_colors = [
+            module_colors[inh_module_assignment[i]]
+            for i in range(self.INHIBITORY_NEURONS)
+        ]
+        inhibitory_scatter = ax.scatter(
+            neuron_positions[self.TOTAL_EXCITATORY_NEURONS :, 0],
+            neuron_positions[self.TOTAL_EXCITATORY_NEURONS :, 1],
+            s=30,
+            c=inh_colors,
+            alpha=0.6,
+            edgecolors="black",
+            linewidths=0.5,
+            label="Inhibitory",
+        )
+
+        # Scatter for active neurons (will be updated each frame)
+        active_scatter = ax.scatter(
+            [], [], s=50, c="yellow", edgecolors="orange", linewidths=2
+        )
+
+        # Add title and time text
+        title_text = ax.text(
+            0.5,
+            0.98,
+            f"Network Simulation (p = {self.p})",
+            ha="center",
+            va="top",
+            transform=fig.transFigure,
+            fontsize=14,
+            weight="bold",
+        )
+        time_text = ax.text(
+            0.5,
+            0.02,
+            "",
+            ha="center",
+            va="bottom",
+            transform=fig.transFigure,
+            fontsize=12,
+        )
+
+        ax.legend(loc="upper right", fontsize=10)
+
+        # === Animation update function ===
+        # Keep track of recently active neurons for visual persistence
+        active_neurons_history = []
+        persistence_frames = 5  # how many frames to keep neurons highlighted
+
+        def update(frame):
+            """Update function for animation."""
+            t = frame
+
+            # Clear history at the start of each loop (when animation repeats)
+            if t == 0:
+                active_neurons_history.clear()
+
+            # Add newly activated neurons
+            if t < sim_time and activations_by_time[t]:
+                for neuron_idx in activations_by_time[t]:
+                    active_neurons_history.append((neuron_idx, t))
+
+            # Remove old activations (outside persistence window)
+            while (
+                active_neurons_history
+                and active_neurons_history[0][1] < t - persistence_frames
+            ):
+                active_neurons_history.pop(0)
+
+            # Get positions of currently active neurons
+            if active_neurons_history:
+                active_indices = [
+                    neuron_idx for neuron_idx, _ in active_neurons_history
+                ]
+                active_positions = neuron_positions[active_indices]
+                active_scatter.set_offsets(active_positions)
+            else:
+                active_scatter.set_offsets(np.empty((0, 2)))
+
+            # Update time text
+            time_text.set_text(f"Time: {t} ms / {sim_time} ms")
+
+            return active_scatter, time_text
+
+        # === Create animation ===
+        # Calculate time step to match desired fps
+        # If sim_time = 1000ms and fps = 30, we want ~30 seconds of animation
+        # So we need 1000 frames at 30fps = 33.3 seconds
+        anim = FuncAnimation(
+            fig, update, frames=sim_time, interval=1000 / fps, blit=True, repeat=True
+        )
+
+        # === 6. Save or show ===
+        if save_animation:
+            print(f"Saving animation to {animation_filename}...")
+            writer = PillowWriter(fps=fps)
+            anim.save(animation_filename, writer=writer)
+            print(f"Animation saved as {animation_filename}")
+        else:
+            plt.tight_layout()
+            plt.show()
+
+        return anim
+
 
 def main():
     os.makedirs("plots", exist_ok=True)
@@ -587,10 +827,9 @@ def main():
         # print(generator.run_simulation(simulation_time))
         spikes = generator.run_simulation(simulation_time)
 
-        title = f"Connection matrix (p = {p})"
         generator.connectivity_matrix(
             excitatory_only=True,
-            title=title,
+            title=f"Connection matrix (p = {p})",
             save_plot=True,
             plot_filename=f"plots/connection_matrix_p{p}.svg",
         )
@@ -608,6 +847,13 @@ def main():
             include_inhibitory=False,
             save_plot=True,
             plot_filename=f"plots/mean_firing_rate_p{p}.svg",
+        )
+        generator.visualize_simulation(
+            spikes,
+            simulation_time,
+            # save_animation=True,
+            # animation_filename=f"plots/network_animation_p{p}.gif",
+            fps=60,
         )
 
     print(f"--- All 6 networks generated ---")
