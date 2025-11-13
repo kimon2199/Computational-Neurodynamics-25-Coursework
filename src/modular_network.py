@@ -561,7 +561,7 @@ class ModularNetwork:
         if self.network is None:
             raise ValueError("Network has not been generated yet.")
 
-        # ===== Calculate neuron positions =====
+        # 1. Calculate neuron positions
         neuron_positions = np.zeros((self.TOTAL_NEURONS, 2))
 
         # Determine which module each inhibitory neuron belongs to
@@ -577,21 +577,16 @@ class ModularNetwork:
         inh_start = self.TOTAL_EXCITATORY_NEURONS
 
         for module_idx in range(self.NUMBER_OF_MODULES):
-            # Angle for this module (same as excitatory module center)
             module_angle = 2 * np.pi * module_idx / self.NUMBER_OF_MODULES
-            # Angular spread for this sector (with some overlap)
             angle_spread = 2 * np.pi / self.NUMBER_OF_MODULES * 0.8
 
-            # Position inhibitory neurons for this module
             start_idx = module_idx * inh_per_module
             end_idx = (module_idx + 1) * inh_per_module
 
             for i in range(start_idx, end_idx):
-                # Random radius biased toward outer edge (closer to module)
                 radius = np.abs(np.random.normal(0.6 * inh_radius, 0.2 * inh_radius))
                 radius = min(radius, inh_radius)
 
-                # Random angle within this module's sector
                 angle = module_angle + np.random.uniform(
                     -angle_spread / 2, angle_spread / 2
                 )
@@ -601,15 +596,13 @@ class ModularNetwork:
                     radius * np.sin(angle),
                 ]
 
-        # Position excitatory neurons in modules around the inhibitory circle
+        # 2. Position excitatory neurons in modules around the inhibitory circle
         module_radius = 0.8  # max radius of each module circle
         module_ring_radius = 3.5  # distance from center to each module center
 
         for module_idx in range(self.NUMBER_OF_MODULES):
-            # Angle for this module's center
+            # Calculate module center position
             module_angle = 2 * np.pi * module_idx / self.NUMBER_OF_MODULES
-
-            # Center position of this module
             module_center_x = module_ring_radius * np.cos(module_angle)
             module_center_y = module_ring_radius * np.sin(module_angle)
 
@@ -617,29 +610,25 @@ class ModularNetwork:
             mod_start = module_idx * self.EXCITATORY_PER_MODULE
             for i in range(self.EXCITATORY_PER_MODULE):
                 neuron_idx = mod_start + i
-                # Random radius with normal distribution (fill the circle)
-                # Using mean=0.5*module_radius and std=0.2*module_radius for good spread
                 radius = np.abs(
                     np.random.normal(0.5 * module_radius, 0.2 * module_radius)
                 )
                 # Clip to ensure we stay within module_radius
                 radius = min(radius, module_radius)
 
-                # Random angle for this neuron
                 neuron_angle = 2 * np.pi * np.random.rand()
-
                 neuron_positions[neuron_idx] = [
                     module_center_x + radius * np.cos(neuron_angle),
                     module_center_y + radius * np.sin(neuron_angle),
                 ]
 
-        # Organize activations by time
+        # 3. Organize activations by time
         activations_by_time = [[] for _ in range(sim_time)]
         for t, neuron_idx in activations:
             if 0 <= t < sim_time:
                 activations_by_time[t].append(neuron_idx)
 
-        # ===== Set up the plot =====
+        # 4. Set up the plot
         fig, ax = plt.subplots(figsize=(10, 10))
         ax.set_xlim(-5.5, 5.5)
         ax.set_ylim(-5.5, 5.5)
@@ -657,7 +646,7 @@ class ModularNetwork:
             exc_colors.append(module_colors[module_idx])
 
         # Plot excitatory neurons with module colors
-        excitatory_scatter = ax.scatter(
+        ax.scatter(
             neuron_positions[: self.TOTAL_EXCITATORY_NEURONS, 0],
             neuron_positions[: self.TOTAL_EXCITATORY_NEURONS, 1],
             s=20,
@@ -673,7 +662,7 @@ class ModularNetwork:
             module_colors[inh_module_assignment[i]]
             for i in range(self.INHIBITORY_NEURONS)
         ]
-        inhibitory_scatter = ax.scatter(
+        ax.scatter(
             neuron_positions[self.TOTAL_EXCITATORY_NEURONS :, 0],
             neuron_positions[self.TOTAL_EXCITATORY_NEURONS :, 1],
             s=30,
@@ -688,9 +677,7 @@ class ModularNetwork:
         active_scatter = ax.scatter(
             [], [], s=50, c="yellow", edgecolors="orange", linewidths=2
         )
-
-        # Add title and time text
-        title_text = ax.text(
+        ax.text(
             0.5,
             0.98,
             f"Network Simulation (p = {self.p})",
@@ -712,7 +699,7 @@ class ModularNetwork:
 
         ax.legend(loc="upper right", fontsize=10)
 
-        # === Animation update function ===
+        # 5. Animation update function
         # Keep track of recently active neurons for visual persistence
         active_neurons_history = []
         persistence_frames = 5  # how many frames to keep neurons highlighted
@@ -752,15 +739,12 @@ class ModularNetwork:
 
             return active_scatter, time_text
 
-        # === Create animation ===
-        # Calculate time step to match desired fps
-        # If sim_time = 1000ms and fps = 30, we want ~30 seconds of animation
-        # So we need 1000 frames at 30fps = 33.3 seconds
+        # 5. Create animation
         anim = FuncAnimation(
             fig, update, frames=sim_time, interval=1000 / fps, blit=True, repeat=True
         )
 
-        # === 6. Save or show ===
+        # 6. Save or show animation
         if save_animation:
             print(f"Saving animation to {animation_filename}...")
             writer = PillowWriter(fps=fps)
