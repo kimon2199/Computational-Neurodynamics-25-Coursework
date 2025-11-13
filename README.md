@@ -1,10 +1,24 @@
 # Modular Network Simulation with Izhikevich Neurons
 
-## Structure and dependencies
+### 📖 Chapters
+- [Class Architecture](#class-architecture)
+  - [Attributes](#attributes)
+  - [Methods](#methods)
+- [Usage and Execution](#usage-and-execution)
+  - [Simulation Flow](#simulation-flow)
+  - [Instructions to Run](#instructions-to-run)
+- [Visualizations](#visualizations)
+  - [Connection Matrices](#connection-matrices)
+  - [Raster Plots](#raster-plots)
+  - [Mean Firing Rates](#mean-firing-rates)
+  - [Network Visualization](#network-visualization)
+
+## Class Architecture
 
 We decided to create a class that represents a modular network of Izhikevich neurons, as there are many parameters that are shared between functions. We divided the code into several private methods and helper functions to improve readability and reusability. The public methods are `generate_modular_network`, to create the basic network structure; `run_simulation`, to simulate the behaviour of the network over time, and all the different necessary plotting functions. An overview of the class attributes and methods goes as follows:
 
-- **Attributes:**
+### Attributes
+
   - `p`: rewiring probability for the small-world network.
   - `params`: dictionary containing all the parameters for the simulation. They are unpacked to class attributes. These parameters are:
     - `NUMBER_OF_MODULES`: number of modules in the network.
@@ -16,7 +30,9 @@ We decided to create a class that represents a modular network of Izhikevich neu
   - `network`: adjacency matrix representing the connections between neurons. It is created in the `generate_modular_network` method.
   - `W`: connectivity matrix with synaptic weights between neurons. It is created in the `generate_modular_network` method.
   - `D`: delay matrix with synaptic delays between neurons. It is created in the `generate_modular_network` method.
-- **Methods:**
+
+### Methods
+
   - `__init__(self, p, params)`: constructor method that initializes the class attributes. It takes the rewiring probability `p` and a dictionary of parameters `params` as input.
   - `_generate_neuron_parameters(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]`: private method that generates the parameters for each neuron in the network, adding some noise to the base parameters. It returns four arrays: `a`, `b`, `c`, and `d`.
   - `_generate_ee_connections(self) -> list[tuple[int, int]]`: private method that creates excitatory-excitatory connections using the Watts-Strogatz small-world model. It returns a list of tuples representing the connections.
@@ -29,8 +45,12 @@ We decided to create a class that represents a modular network of Izhikevich neu
   - `connectivity_matrix`(self, excitatory_only, title, save_plot, plot_filename): public method that plots the connectivity matrix of the network. If `excitatory_only` is True, it only shows excitatory neurons.
   - `raster_plot(self, spikes, sim_time, excitatory_only, y0_on_top, save_plot, plot_filename)`: public method that creates a raster plot of the spike times. If `excitatory_only` is True, it only shows excitatory neurons. If `y0_on_top` is True, it inverts the y-axis.
   - `mean_firing_rate(self, activations, sim_time, window_size, step_size, include_inhibitory, save_plot, plot_filename)`: public method that calculates and plots the mean firing rate over time. If `include_inhibitory` is True, it includes inhibitory neurons in the calculation.
+  - `visualize_simulation(self, activations, sim_time, save_animation, animation_filename, fps)`: public method that shows the spatial positions of neurons and their activations over time as an animation.
 
-**Method Flow Summary:**  
+## Usage and Execution
+
+### Simulation Flow
+
  The overall program flow begins in the `main()` method, which initializes the parameters and creates a `ModularNetwork` instance for each rewiring probability `p`.  
  For each instance:
 
@@ -38,18 +58,31 @@ We decided to create a class that represents a modular network of Izhikevich neu
 - `run_simulation()` then uses the generated `IzNetwork` to simulate neuronal activity over time and record spike events.
 - Finally, the plotting methods (`connectivity_matrix`, `raster_plot`, and `mean_firing_rate`) visualize the network’s structure and dynamics.
 
-**Instructions to Run the Code**
+### Instructions to Run
 
 1. Ensure that the file `iznetwork.py` is available and located in the same directory as `modular_network.py`.
-2. Run the simulation using:
-   ```bash
-   python3 modular_network.py
-   ```
+2. Run the simulation. You have two main options:
+    - **Default Mode (Save Static Plots):** Run the script without any flags. The simulation will run to completion and automatically create a folder named `plots/` containing all the static visualizations (connection matrices, raster plots, and firing rate plots).
+
+      ```bash
+      python3 modular_network.py
+      ```
+
+    - **Visualization Mode (Live Animation):** To watch a live animation of the neurons firing during the simulation, use the `-v` or `--visualize` flag.
+
+      ```bash
+      python3 modular_network.py --visualize
+      ```
+
+      **Note:** When this flag is set, you will see the animation at runtime, but the program will **not** save the animations to the `plots/` folder. The live animation itself is not saved as a GIF because the process is very time-consuming.
+
+      You can see pre-rendered examples of these animations by scrolling to the bottom of the `README.md` on our [GitHub repository](https://github.com/kimon2199/Computational-Neurodynamics-25-Coursework/tree/f/extra_plot).
+
 3. The program will automatically create a folder named plots/, which will contain all generated visualizations (connection matrices, raster plots, and firing rate plots).
 
 <div style="break-before: page;"></div>
 
-## Plots
+## Visualizations
 
 ### Connection Matrices
 
